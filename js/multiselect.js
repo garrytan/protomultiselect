@@ -129,10 +129,12 @@ var ResizableTextbox = Class.create({
 	
 	getMeasurementDiv: function()
 	{
+		var div;
+		
 		// A hidden div created in order to measure the width of the text
 		if (!$('__resizeable_textbox_measure_div'))
 		{
-			var div = new Element('div', { id: '__resizeable_textbox_measure_div' })
+			div = new Element('div', { id: '__resizeable_textbox_measure_div' })
 			div.setStyle({
 				position: 'absolute',
 				top: '-1000px',
@@ -142,7 +144,7 @@ var ResizableTextbox = Class.create({
 		}
 		else
 		{
-			var div = $('__resizeable_textbox_measure_div');
+			div = $('__resizeable_textbox_measure_div');
 		}
 
 		return div.setStyle({
@@ -252,9 +254,9 @@ var TextboxList = Class.create({
 				this.current_input.split(/,/).each(function(value) {
 					value = value.strip();
 					values.push({caption: value, value: value, newValue: true});
-				}.bindAsEventListener(this))
+				}.bind(this)); //bindAsEventListener(this)) -- we are not listening
 			}
-			this.element.value = values.toJSON();
+			this.element.value = Object.toJSON(values);
 		} else {
 	 		if (this.options.get('encodeEntities')) {
 				// entitizeHTML / unentitizeHTML needs to be called around the unescapeHTML() call in order to preserve any braces
@@ -677,6 +679,7 @@ var ProtoMultiSelect = Class.create(TextboxList, {
 		return this.data.find(function(d) {
 			if (!d) return false;
 			var dataObj = d.evalJSON(true);
+			
 			return (dataObj && (dataObj.caption.toLowerCase().gsub(' ', '') == search.toLowerCase().gsub(' ', ''))); 
 		});
 	 },
@@ -704,12 +707,14 @@ var ProtoMultiSelect = Class.create(TextboxList, {
 					retval = true;					
 				}
 			}
-		}.bindAsEventListener(this));
+		}.bind(this));//		}.bindAsEventListener(this));  -- caused strange bug in webkit browsers … and seems unnecessary
 		
 		return retval;
 	},
 	
 	autoShow: function(search) {
+		var matches, regexp, matches_found, i, v, count, extra_elems_count, special_add_el;
+		
 		this.autoholder.setStyle({'display': 'block'});
 		this.autoholder.descendants().each(function(e) { e.hide(); });
 		
@@ -724,15 +729,15 @@ var ProtoMultiSelect = Class.create(TextboxList, {
 			this.autoresults.setStyle({'display': 'block'}).update('');
 			
 			if (!this.options.get('regexSearch')) {
-				var matches = new Array();
+				matches = new Array();
 				if (search) {
 					if (!this.options.get('caseSensitive')) {
 						search = search.toLowerCase();
 					}
 					
-					for (var matches_found = 0, i = 0, len = this.data_searchable.length; i < len; i++) {
+					for (matches_found = 0, i = 0, len = this.data_searchable.length; i < len; i++) {
 						if (this.data_searchable[i].indexOf(search) >= 0) {
-							var v = this.data[i];
+							v = this.data[i];
 							if (v !== undefined) {
 								matches[matches_found++] = v;
 							}
@@ -743,12 +748,12 @@ var ProtoMultiSelect = Class.create(TextboxList, {
 				
 			} else {
 				if (this.options.get('wordMatch')) {
-					var regexp = new RegExp("(^|\\s)"+RegExp.escape(search),(!this.options.get('caseSensitive') ? 'i' : ''));
+					regexp = new RegExp("(^|\\s)"+RegExp.escape(search),(!this.options.get('caseSensitive') ? 'i' : ''));
 				} else {
-					var regexp = new RegExp(RegExp.escape(search),(!this.options.get('caseSensitive') ? 'i' : ''));
+					regexp = new RegExp(RegExp.escape(search),(!this.options.get('caseSensitive') ? 'i' : ''));
 				}
 				
-				var matches = this.data.filter(
+				matches = this.data.filter(
 					function(str) {
 						return str ? regexp.test(str.evalJSON(true).caption) : false;
 					}
@@ -759,9 +764,9 @@ var ProtoMultiSelect = Class.create(TextboxList, {
 				matches = matches.sortBy(function(el) { return el.evalJSON(true).caption });
 			}
 			
-			var count = 0;
-			var extra_elems_count = 0;
-			var special_add_el = null;
+			count = 0;
+			extra_elems_count = 0;
+			special_add_el = null;
 			
 			// "Add **search**" element
 			if (this.isSearchInsertable(search)) {
@@ -785,12 +790,14 @@ var ProtoMultiSelect = Class.create(TextboxList, {
 			// Handle matches...
 			matches.each(
 				function(result, ti) {
+					var that = this,
+						el, caption;
+						
 					count++;
 					if (ti >= ((this.options.get('maxResults') ? this.options.get('maxResults') : this.loptions.get('autocomplete').maxresults) - extra_elems_count)) return;
 					
-					var that = this;
-					var el = new Element('li');
-					var caption = result.evalJSON(true).caption;
+					el = new Element('li');
+					caption = result.evalJSON(true).caption;
 					
 					el.observe('click', function(e)
 						{
@@ -889,7 +896,7 @@ var ProtoMultiSelect = Class.create(TextboxList, {
 				if (search && search != '' && this.isSearchInsertable(search)) {
 					this.autoAddSingle({caption: search, value: search, newValue: true});
 				}
-			}.bindAsEventListener(this));
+			}.bind(this));  //.bindAsEventListener(this)); -- unlikely it should be bound as event listener since it is called directly and not attached to an element's event
 		} else {
 			this.autoAddSingle(new_value);
 		}
@@ -1041,7 +1048,7 @@ var ProtoMultiSelect = Class.create(TextboxList, {
 				input_values.each(function(el) { 
 					this.add(el); 
 					if (!el.newValue) delete this.data[this.data.indexOf(Object.toJSON(el))];			    
-				}.bindAsEventListener(this));
+				}.bind(this));  //bindAsEventListener(this)); -- event listener seems to be unnecessary and erroneous
 			}
 		} else {
 			var input_values = this.element.value.split(this.options.get('separator')).invoke('strip');

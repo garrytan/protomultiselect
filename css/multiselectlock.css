@@ -1,0 +1,5 @@
+/* MultiSelectLock */
+div.holder a.bit-box.locked a.closebutton { position: absolute; right: 0; top: 5px; display: block; width: 7px; height: 7px; font-size: 1px; background: url('../images/lock.png'); }
+div.holder a.bit-box.locked { -moz-border-radius: 6px; -webkit-border-radius: 6px; border-radius: 6px; border: 1px solid #F3D8CA; background: #F8E7DE; padding: 1px 5px 2px; padding-right: 15px; position: relative; }
+div.holder a.bit-hover.locked { background: #F1CEBB; border: 1px solid #E0956D; }
+div.holder a.bit-box-focus.locked { border-color: #EC8B59; background: #EC8B59; color: #FFF; }
